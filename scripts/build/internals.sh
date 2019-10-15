@@ -138,5 +138,13 @@ do_finish() {
         CT_InstallCopyingInformation
     fi
 
+    if [ "${CT_TARBALL_RESULT}" = y ]; then
+        temp_dir = $(mktemp -d -p "${CT_BUILD_TOP_DIR}")
+        toolchain_name = "toolchain-${CT_TOOLCHAIN_PKGVERSION}-${CT_HOST:+HOST-${CT_HOST}}-${CT_TARGET}"
+        mkdir "${temp_dir}/${toolchain_name}"
+        rsync -av "${CT_PREFIX_DIR}/*" "${temp_dir}/${toolchain_name}"
+        tar Jcf "${CT_TARBALL_RESULT_DIR}/${toolchain_name}.tar.xz" --directory "${temp_dir}" "${toolchain_name}"
+    fi
+
     CT_EndStep
 }
