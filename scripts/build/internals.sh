@@ -31,6 +31,8 @@ do_finish() {
     local strip_args
     local gcc_version
     local exe_suffix
+    local tarball_name
+    local tempdir
 
     CT_DoStep INFO "Finalizing the toolchain's directory"
 
@@ -136,6 +138,19 @@ do_finish() {
 
     if [ "${CT_INSTALL_LICENSES}" = y ]; then
         CT_InstallCopyingInformation
+    fi
+
+    if [ "${CT_TARBALL_RESULT}" = y ]; then
+        tarball_name="${CT_TARBALL_RESULT_FILENAME}.tar.${CT_TARBALL_RESULT_COMPRESSION}"
+        CT_DoLog EXTRA "Creating binary toolchain tarball: ${CT_TARBALL_RESULT_DIR}/${tarball_name}"
+        temp_dir=$(mktemp -d -p "${CT_BUILD_TOP_DIR}")
+        mkdir "${temp_dir}/${CT_TARBALL_RESULT_FILENAME}"
+        rsync -av "${CT_PREFIX_DIR}/" "${temp_dir}/${CT_TARBALL_RESULT_FILENAME}"
+        cp "${CT_TOP_DIR}/.config" "${temp_dir}/${CT_TOOLCHAIN_PKGVERSION}.config"
+        tar Jcf "${CT_TARBALL_RESULT_DIR}/${tarball_name}" --directory "${temp_dir}" "${CT_TARBALL_RESULT_FILENAME}"
+        CT_DoLog EXTRA "Calculating binary toolchain checksum"
+        sha256sum "${CT_TARBALL_RESULT_DIR}/${tarball_name}" > "${CT_TARBALL_RESULT_DIR}/${tarball_name}.asc"
+        rm -rf --one-file-system "${temp_dir}"
     fi
 
     CT_EndStep
